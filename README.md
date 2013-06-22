@@ -1,4 +1,4 @@
 space-traders
 =============
 
-A game about piracy and empire.
+A game of piracy and empire.

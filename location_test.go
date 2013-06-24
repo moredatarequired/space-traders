@@ -23,3 +23,17 @@ func TestDistance(t *testing.T) {
 		t.Errorf("s1.Distance(s2) = %v, want 5", d)
 	}
 }
+
+func BenchmarkSquaredDistance(b *testing.B) {
+	bar, foo := &Bar{3e-11, 2.3, -3}, &Foo{0.34, 2, 1e5}
+	for i := 0; i < b.N; i++ {
+		SquaredDistance(foo, bar)
+	}
+}
+
+func BenchmarkDistance(b *testing.B) {
+	bar, foo := &Bar{3e-11, 2.3, -3}, &Foo{0.34, 2, 1e5}
+	for i := 0; i < b.N; i++ {
+		Distance(foo, bar)
+	}
+}

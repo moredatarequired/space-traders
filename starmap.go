@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"os"
 	"strconv"
-	"math"
 	"io"
 )
 
@@ -14,14 +13,7 @@ type Star struct {
 	X, Y, Z, Magnitude float64
 }
 
-func (s *Star) squaredDistance(other *Star) float64 {
-	xd, yd, zd := s.X - other.X, s.Y - other.Y, s.Z - other.Z
-	return xd*xd + yd*yd + zd*zd
-}
-
-func (s *Star) Distance(other *Star) float64 {
-	return math.Pow(s.squaredDistance(other), 0.5)
-}
+func (s *Star) Position() (x, y, z float64) { return s.X, s.Y, s.Z }
 
 func atof(s string) (float64, error) { return strconv.ParseFloat(s, 64) }
 

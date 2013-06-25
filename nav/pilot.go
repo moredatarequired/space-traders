@@ -47,20 +47,49 @@ func (s *Ship) Approach(t *Ship, dv float64) []float64 {
 	acc := []float64{0, 0, 0}
 	k := Norm(1, diff...)
 	for i, d := range diff {
-		acc[i] = -d * dv / k
+		acc[i] = -0.9 * d * dv / k
 	}
 	return acc
 }
 
+func NewPIDController(p, i, d float64) (func (v, t float64) float64) {
+	integral := 0.0
+	last_e := 0.0
+	return func (v, t float64) float64 {
+		e := v - t
+		integral += e * dT
+		de := (e - last_e) / dT
+		last_e = e
+		return p * e + i * integral + d * de
+	}
+}
+
+func NewMotionController(s *Ship, dv, p, i, d float64) (func (t []float64) []float64) {
+	var controller [](func (v, t float64) float64) = nil
+	for _ = range s.Position {
+		controller = append(controller, NewPIDController(p, i, d))
+	}
+	return func (t []float64) []float64 {
+		var output []float64
+		for k, v := range t {
+			desired := controller[k](s.Position[k], v)
+			output = append(output, math.Max(-dv, math.Min(dv, desired)))
+		}
+		return output
+	}
+}
+
 func main() {
 	hero := &Ship{[]float64{1, 4, 9}, []float64{1, 1, 1}}
-	foe := &Ship{[]float64{0, 0, 0}, []float64{0, 0, 0}}
-	for i := 0; i < 1000; i++ {
-		acc := hero.Approach(foe, 5)
+	foe := &Ship{[]float64{0, 0, 0}, []float64{0, 5, 0}}
+	c := NewMotionController(hero, 5, -1, 0, -1)
+	for i := 0; i < 250; i++ {
+		acc := c(foe.Position)
+		if 0 == i % 10 {
+			fmt.Printf("at %v/%v, on vector %v\n", hero.Position, foe.Position, acc)
+		}
 		hero.Accelerate(acc)
 		hero.Move()
-		if 0 == i % 100 {
-			fmt.Println(hero)
-		}
+		foe.Move()
 	}
 }

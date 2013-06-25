@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 )
 
 type Ship struct {
@@ -36,6 +37,14 @@ func Norm(k float64, fs ...float64) float64 {
 	return math.Pow(total, 1 / k)
 }
 
+func Distance(a, b []float64) float64 {
+	var diff []float64
+	for i, v := range a {
+		diff = append(diff, v - b[i])
+	}
+	return Norm(2, diff...)
+}
+
 // dv is the maximum total Delta-V than be expended.
 func (s *Ship) Approach(t *Ship, dv float64) []float64 {
 	diff := []float64{0, 0 , 0}
@@ -57,7 +66,7 @@ func NewPIDController(p, i, d float64) (func (v, t float64) float64) {
 	last_e := 0.0
 	return func (v, t float64) float64 {
 		e := v - t
-		integral += e * dT
+		integral = integral * 0.99 + e * dT
 		de := (e - last_e) / dT
 		last_e = e
 		return p * e + i * integral + d * de
@@ -72,10 +81,17 @@ func NewMotionController(s *Ship, dv, p, i, d float64) (func (t []float64) []flo
 	return func (t []float64) []float64 {
 		var output []float64
 		for k, v := range t {
-			desired := controller[k](s.Position[k], v)
-			output = append(output, math.Max(-dv, math.Min(dv, desired)))
+			output = append(output, controller[k](s.Position[k], v))
 		}
-		return output
+		n := Norm(1, output...)
+		if n <= dv {
+			return output
+		}
+		var acc []float64
+		for _, o := range output {
+			acc = append(acc, o * dv / n)
+		}
+		return acc
 	}
 }
 
@@ -116,17 +132,48 @@ func (s *Ship) RunAround( t []float64, dv float64) {
 	s.Move()
 }
 
-func main() {
-	hero := &Ship{[]float64{1, 4, 9}, []float64{1, 1, 1}}
-	foe := &Ship{[]float64{0, 0, 0}, []float64{0, 5, 0}}
-	c := NewMotionController(hero, 5, -1, 0, -1)
-	for i := 0; i < 1000; i++ {
-		acc := c(foe.Position)
-		if 0 == i % 100 {
-			fmt.Printf("at %v/%v, on vector %v\n", hero.Position, foe.Position, acc)
+func RandomShip(b, c float64) *Ship {
+	return &Ship{
+		[]float64{rand.Float64() * b, rand.Float64() * b, rand.Float64() * b},
+		[]float64{rand.Float64() * c, rand.Float64() * c, rand.Float64() * c}}
+}
+
+func FlightGame(p, i, d float64) int64 {
+	var ticks int64 = 0
+	for k := 0; k < 30; k++ {
+		points := 0.0
+		hero := &Ship{[]float64{0, 0, 0}, []float64{0, 0, 0}}
+		c := NewMotionController(hero, 5, p, i, d)
+		foe := RandomShip(1000, 5)
+		for points < 10 {
+			switch k % 3 {
+			case 0: foe.Move()
+			case 1: foe.RunFrom(hero.Position, 1)
+			case 2: foe.RunAround(hero.Position, 1)
+			}
+			acc := c(foe.Position)
+			hero.Accelerate(acc)
+			hero.Move()
+			ticks += 1
+			points += dT / Distance(hero.Position, foe.Position)
+			if float64(ticks) > 10000.0 / dT { return 1000 * ticks }
 		}
-		hero.Accelerate(acc)
-		hero.Move()
-		foe.RunAround(hero.Position, 1)
+		//fmt.Printf("Enemy %v shot down at time %v (position %v)\n", k, ticks, foe.Position)
+	}
+	return ticks
+}
+
+func Rand(a, b float64) float64 {
+	return rand.Float64() * (b - a) + a
+}
+
+func main() {
+	for k := 0; k < 10; k++ {
+		var p, i, d = -0.08, 0.0, -0.75  // Good enough.
+		var sum int64 = 0
+		for j := 0; j < 10; j++ {
+			sum += FlightGame(p, i, d)
+		}
+		fmt.Printf("%v for Pilot %v %v %v\n", float64(sum) / 1000000.0, p, i, d)
 	}
 }

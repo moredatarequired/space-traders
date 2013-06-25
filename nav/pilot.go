@@ -79,17 +79,54 @@ func NewMotionController(s *Ship, dv, p, i, d float64) (func (t []float64) []flo
 	}
 }
 
+func (s *Ship) RunFrom(t []float64, dv float64) {
+	var vector []float64
+	for i, p := range s.Position {
+		vector = append(vector, p - t[i])
+	}
+	n := Norm(1, vector...)
+	var acc []float64
+	for _, v := range vector {
+		acc = append(acc, -v * dv / n)
+	}
+	s.Accelerate(acc)
+	s.Move()
+}
+
+func CrossProduct(u, v []float64) []float64 {
+	return []float64{u[1]*v[2] - u[2]*v[1], u[2]*v[0] - u[0]*v[2], u[0]*v[1] - u[1]*v[0]}
+}
+
+func PerpendicularNearest(u, v []float64) []float64 {
+	return CrossProduct(u, CrossProduct(v, u))
+}
+
+func (s *Ship) RunAround( t []float64, dv float64) {
+	var vector []float64
+	for i, p := range s.Position {
+		vector = append(vector, p - t[i])
+	}
+	vector = PerpendicularNearest(vector, s.Velocity)
+	n := Norm(1, vector...)
+	var acc []float64
+	for _, v := range vector {
+		acc = append(acc, v * dv / n)
+	}
+	s.Accelerate(acc)
+	s.Move()
+}
+
 func main() {
 	hero := &Ship{[]float64{1, 4, 9}, []float64{1, 1, 1}}
 	foe := &Ship{[]float64{0, 0, 0}, []float64{0, 5, 0}}
 	c := NewMotionController(hero, 5, -1, 0, -1)
-	for i := 0; i < 250; i++ {
+	for i := 0; i < 1000; i++ {
 		acc := c(foe.Position)
-		if 0 == i % 10 {
+		if 0 == i % 100 {
 			fmt.Printf("at %v/%v, on vector %v\n", hero.Position, foe.Position, acc)
 		}
 		hero.Accelerate(acc)
 		hero.Move()
-		foe.Move()
+		foe.RunAround(hero.Position, 1)
 	}
 }

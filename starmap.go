@@ -1,4 +1,4 @@
-package starmap
+package main
 
 import (
 	"encoding/csv"

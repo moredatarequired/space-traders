@@ -1,1 +1,1 @@
-package starmap
+package main

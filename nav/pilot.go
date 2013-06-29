@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/moredatarequired/optbench"
 	"fmt"
 	"math"
 	"math/rand"
@@ -138,14 +139,14 @@ func RandomShip(b, c float64) *Ship {
 		[]float64{rand.Float64() * c, rand.Float64() * c, rand.Float64() * c}}
 }
 
-func FlightGame(p, i, d float64) int64 {
-	var ticks int64 = 0
-	for k := 0; k < 30; k++ {
-		points := 0.0
+func FlightGame(p, i, d float64) float64 {
+	points := 0.0
+	targets, time := 2, 40.0
+	for k := 0; k < targets; k++ {
 		hero := &Ship{[]float64{0, 0, 0}, []float64{0, 0, 0}}
-		c := NewMotionController(hero, 5, p, i, d)
-		foe := RandomShip(1000, 5)
-		for points < 10 {
+		foe := &Ship{[]float64{10, 10, 10}, []float64{0, 0, 0}}
+		c := NewMotionController(hero, 1.05, p, i, d)
+		for ticks := 0.0; ticks * dT < time; ticks += 1 {
 			switch k % 3 {
 			case 0: foe.Move()
 			case 1: foe.RunFrom(hero.Position, 1)
@@ -154,13 +155,15 @@ func FlightGame(p, i, d float64) int64 {
 			acc := c(foe.Position)
 			hero.Accelerate(acc)
 			hero.Move()
-			ticks += 1
-			points += dT / Distance(hero.Position, foe.Position)
-			if float64(ticks) > 10000.0 / dT { return 1000 * ticks }
+			if d := Distance(hero.Position, foe.Position); d < 1 {
+				points += dT
+			} else {
+				points += dT / d
+			}
 		}
 		//fmt.Printf("Enemy %v shot down at time %v (position %v)\n", k, ticks, foe.Position)
 	}
-	return ticks
+	return points / (float64(targets) * time)
 }
 
 func Rand(a, b float64) float64 {
@@ -168,12 +171,19 @@ func Rand(a, b float64) float64 {
 }
 
 func main() {
-	for k := 0; k < 10; k++ {
-		var p, i, d = -0.08, 0.0, -0.75  // Good enough.
-		var sum int64 = 0
-		for j := 0; j < 10; j++ {
-			sum += FlightGame(p, i, d)
-		}
-		fmt.Printf("%v for Pilot %v %v %v\n", float64(sum) / 1000000.0, p, i, d)
+	pop := optbench.NewPopulation(2, 100)
+	fn := func (xs []float64) float64 {
+		return -FlightGame(-xs[0], 0.0, -xs[1])
 	}
+
+	for k := 0; k < 10000; k++ {
+		best := pop.Evaluate(fn)
+		member := pop.Members[len(pop.Members) - 1]
+		ratio := member.Genes[0] / member.Genes[1]
+		fmt.Printf("Gen %v got to %.5f/%.5f with %v(%v)\n", k, -best,
+			-pop.Fittest, member.Genes, ratio)
+		optbench.Epoch(pop)
+	}
+	// The result of this experiment was that an ideal PID controller is
+	// p, i, d := 0.2, 0.0, 0.67 (to 2 significant figures).
 }

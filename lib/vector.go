@@ -101,3 +101,10 @@ func (v *Vector) Cross(u *Vector) *Vector {
 func (v *Vector) CrossInPlace(u *Vector) {
 	v.X, v.Y, v.Z = v.Y*u.Z - v.Z*u.Y, v.Z*u.X - v.X*u.Z, v.X*u.Y - v.Y*u.X
 }
+
+// Set v to the vector v + s*u.
+func (v *Vector) AddWithScaleInPlace(u *Vector, s float64) {
+	v.X += u.X * s
+	v.Y += u.Y * s
+	v.Z += u.Z * s
+}

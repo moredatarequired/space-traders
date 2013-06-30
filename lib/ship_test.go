@@ -24,6 +24,13 @@ func TestMove(t *testing.T) {
 	}
 }
 
+func BenchmarkMove(b *testing.B) {
+	s := &Ship{Acceleration:Vector{0.1, 0.2, 0.3}}
+	for i := 0; i < b.N; i++ {
+		s.Move(0.01)
+	}
+}
+
 // func TestAcceleration(t *testing.T) {
 //	s := &Ship{}
 //	s.Acceleration[0], s.Acceleration[1] = 1.0, 0.5

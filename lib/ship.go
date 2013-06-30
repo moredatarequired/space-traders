@@ -24,10 +24,14 @@ func (s1 *Ship) Distance(s2 *Ship) float64 {
 
 // Adopt the maximum acceleration away from the given point.
 func (s *Ship) Flee(p *Vector, a float64) {
-	// Use acceleration as "scratch" space for calculation.
+	// Since acceleration is overwritten, use it as "scratch" space.
 	s.Acceleration = s.Position
 	s.Acceleration.MinusInPlace(p)
-	s.Acceleration.ScaleToInPlace(a)
+	if s.Acceleration.IsZero() {
+		s.Acceleration.X = a
+	} else {
+		s.Acceleration.ScaleToInPlace(a)
+	}
 }
 
 // Return the perpendicular to u that lies nearest v.
@@ -35,10 +39,22 @@ func PerpendicularNearest(u, v *Vector) *Vector {
 	return u.Cross(v.Cross(u))
 }
 
+// Return the perpendicular to u that lies nearest v.
+func PerpendicularNearestInPlace(u, v *Vector) {
+	v.CrossInPlace(u)
+	u.CrossInPlace(v)
+}
+
 // Set the acceleration of s in order to circle t.
 func (s *Ship) CircleTarget(t *Ship, a float64) {
-	// TODO: modify acceleration vector in place.
-	v := s.Velocity.Minus(&t.Velocity)
-	p := s.Position.Minus(&t.Position)
-	s.Acceleration = *PerpendicularNearest(p, v).ScaleTo(a)
+	v := s.Velocity
+	v.MinusInPlace(&t.Velocity)
+	// Since acceleration is overwritten, use it as "scratch" space.
+	s.Acceleration = t.Position
+	s.Acceleration.MinusInPlace(&s.Position)
+	PerpendicularNearestInPlace(&s.Acceleration, &v)
+	s.Acceleration.ScaleToInPlace(a)
+	if s.Acceleration.IsZero() {
+		s.Acceleration.X = a
+	}
 }

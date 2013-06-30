@@ -127,7 +127,7 @@ func TestScaleTo(t *testing.T) {
 		t.Error("Receiver changed during operation.")
 	}
 	s = (&Vector{5, 5, 5}).ScaleTo(math.Sqrt(3))
-	if !s.Equal(&Vector{1, 1, 1}) {
+	if !s.Equals(&Vector{1, 1, 1}) {
 		t.Errorf("Expected vector (1, 1, 1), got %v", s)
 	}
 }

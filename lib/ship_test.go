@@ -64,16 +64,16 @@ func BenchmarkFlee(b *testing.B) {
 	}
 }
 
-func TestCircleTarget(t *testing.T) {
+func TestSpiralAway(t *testing.T) {
 	p, s := &Ship{}, &Ship{Position:Vector{X:1}, Velocity:Vector{Y:1}}
-	s.CircleTarget(p, 1.5)
+	s.SpiralAway(p, 1.5)
 	acc := &Vector{0, 1.5, 0}
 	if !s.Acceleration.Equals(acc) {
 		t.Errorf("Ship should circle at %v; instead going at %v.",
 			acc, s.Acceleration)
 	}
 	s.Position.Y = 1
-	s.CircleTarget(p, math.Sqrt(2))
+	s.SpiralAway(p, math.Sqrt(2))
 	acc = &Vector{-1, 1, 0}
 	if !s.Acceleration.Equals(acc) {
 		t.Errorf("Ship should circle at %v; instead going at %v.",
@@ -81,9 +81,26 @@ func TestCircleTarget(t *testing.T) {
 	}
 }
 
-func BenchmarkCircleTarget(b *testing.B) {
-	p, s := &Ship{}, &Ship{Position:Vector{X:1}}
+func BenchmarkSpiralAway(b *testing.B) {
+	p, s := &Ship{}, &Ship{Position:Vector{X:1}, Velocity:Vector{Y:1}}
 	for i := 0; i < b.N; i++ {
-		s.CircleTarget(p, 5)
+		s.SpiralAway(p, 5)
+	}
+}
+
+func TestCircle(t *testing.T) {
+	p, s := &Ship{Position:Vector{1, 1, 1}}, &Ship{Position:Vector{X:1}}
+	s.Circle(&p.Position, math.Sqrt(2))
+	acc := &Vector{0, 1, 1}
+	if !s.Acceleration.Equals(acc) {
+		t.Errorf("Ship should flee at %v; instead going at %v.",
+			acc, s.Acceleration)
+	}
+}
+
+func BenchmarkCircle(b *testing.B) {
+	p, s := &Vector{X:1}, &Ship{}
+	for i := 0; i < b.N; i++ {
+		s.Circle(p, 5)
 	}
 }

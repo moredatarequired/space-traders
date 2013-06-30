@@ -104,6 +104,13 @@ func (v *Vector) MinusInPlace(u *Vector) {
 	v.Z -= u.Z
 }
 
+// Set v to the vector v + s*u. This (MAD) is a common operation.
+func (v *Vector) AddWithScaleInPlace(u *Vector, s float64) {
+	v.X += u.X * s
+	v.Y += u.Y * s
+	v.Z += u.Z * s
+}
+
 // Produce the cross product (v x u).
 func (v *Vector) Cross(u *Vector) *Vector {
 	return &Vector{v.Y*u.Z - v.Z*u.Y, v.Z*u.X - v.X*u.Z, v.X*u.Y - v.Y*u.X}
@@ -114,9 +121,27 @@ func (v *Vector) CrossInPlace(u *Vector) {
 	v.X, v.Y, v.Z = v.Y*u.Z - v.Z*u.Y, v.Z*u.X - v.X*u.Z, v.X*u.Y - v.Y*u.X
 }
 
-// Set v to the vector v + s*u.
-func (v *Vector) AddWithScaleInPlace(u *Vector, s float64) {
-	v.X += u.X * s
-	v.Y += u.Y * s
-	v.Z += u.Z * s
+// Give the projection of v onto u.
+func (v *Vector) Project(u *Vector) *Vector {
+	scale := v.Dot(u) / u.SquaredLength()
+	return u.Times(scale)
+}
+
+// Set v to the portion projected onto u.
+func (v *Vector) ProjectInPlace(u *Vector) {
+	scale := v.Dot(u) / u.SquaredLength()
+	v.X = u.X * scale
+	v.Y = u.Y * scale
+	v.Z = u.Z * scale
+}
+
+// Return the vector rejection of v from u (v - v project u).
+func (v *Vector) Reject(u *Vector) *Vector {
+	return v.Minus(v.Project(u))
+}
+
+// Set v to the vector rejection of v from u.
+func (v *Vector) RejectInPlace(u *Vector) {
+	scale := v.Dot(u) / u.SquaredLength()
+	v.AddWithScaleInPlace(u, -scale)
 }

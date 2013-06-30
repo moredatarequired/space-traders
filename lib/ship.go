@@ -4,6 +4,7 @@ type Ship struct {
 	Position Vector
 	Velocity Vector
 	Acceleration Vector
+	c Controller
 }
 
 // Move the ship over t seconds.
@@ -22,6 +23,10 @@ func (s1 *Ship) Distance(s2 *Ship) float64 {
 	return s1.Position.Distance(&s2.Position)
 }
 
+type Controller interface {
+	Redirect()
+}
+
 // Adopt the maximum acceleration away from the given point.
 func (s *Ship) Flee(p *Vector, a float64) {
 	// Since acceleration is overwritten, use it as "scratch" space.
@@ -32,6 +37,16 @@ func (s *Ship) Flee(p *Vector, a float64) {
 	} else {
 		s.Acceleration.ScaleToInPlace(a)
 	}
+}
+
+type FleeController struct {
+	s *Ship
+	p *Vector
+	a float64
+}
+
+func (f *FleeController) Redirect() {
+	f.s.Flee(f.p, f.a)
 }
 
 // Return the perpendicular to u that lies nearest v.
@@ -45,16 +60,23 @@ func PerpendicularNearestInPlace(u, v *Vector) {
 	u.CrossInPlace(v)
 }
 
-// Set the acceleration of s in order to circle t.
-func (s *Ship) CircleTarget(t *Ship, a float64) {
-	v := s.Velocity
-	v.MinusInPlace(&t.Velocity)
+// Accelerate tangentially away from the target.
+func (s *Ship) SpiralAway(t *Ship, a float64) {
 	// Since acceleration is overwritten, use it as "scratch" space.
-	s.Acceleration = t.Position
-	s.Acceleration.MinusInPlace(&s.Position)
-	PerpendicularNearestInPlace(&s.Acceleration, &v)
+	s.Acceleration = s.Velocity
+	s.Acceleration.MinusInPlace(&t.Velocity)
+	p := t.Position
+	p.MinusInPlace(&s.Position)
+	s.Acceleration.RejectInPlace(&p)
 	s.Acceleration.ScaleToInPlace(a)
 	if s.Acceleration.IsZero() {
 		s.Acceleration.X = a
 	}
+}
+
+// "Orbits" the target. Orbit is circular when a = v^2 / r.
+func (s *Ship) Circle(p *Vector, a float64) {
+	s.Acceleration = *p
+	s.Acceleration.MinusInPlace(&s.Position)
+	s.Acceleration.ScaleToInPlace(a)
 }

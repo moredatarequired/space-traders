@@ -9,8 +9,8 @@ type Ship struct {
 // Move the ship over t seconds.
 func (s *Ship) Move(t float64) {
 	p, v, a := &s.Position, &s.Velocity, &s.Acceleration
-	p.AddWithScaleInPlace(v, t)
-	p.AddWithScaleInPlace(a, t*t/2)
+	p.AddWithScaleInPlace(v, t)  // p += t*v
+	p.AddWithScaleInPlace(a, 0.5*t*t)
 	v.AddWithScaleInPlace(a, t)
 }
 

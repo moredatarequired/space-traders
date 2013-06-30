@@ -24,9 +24,10 @@ func (s1 *Ship) Distance(s2 *Ship) float64 {
 
 // Adopt the maximum acceleration away from the given point.
 func (s *Ship) Flee(p *Vector, a float64) {
-	// TODO: modify acceleration vector in place.
-	dir := s.Position.Minus(p)
-	s.Acceleration = *dir.ScaleTo(a)
+	// Use acceleration as "scratch" space for calculation.
+	s.Acceleration = s.Position
+	s.Acceleration.MinusInPlace(p)
+	s.Acceleration.ScaleToInPlace(a)
 }
 
 // Return the perpendicular to u that lies nearest v.

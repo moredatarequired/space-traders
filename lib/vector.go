@@ -6,8 +6,16 @@ import (
 	"math"
 )
 
+// Equality approximation for float64.
+func fequal(x, y float64) bool { return math.Abs(x - y) < 1e-15 }
+
 type Vector struct {
 	X, Y, Z float64
+}
+
+// Approximation for vector equality.
+func (v *Vector) Equal(u *Vector) bool {
+	return fequal(v.X, u.X) && fequal(v.Y, u.Y) && fequal(v.Z, u.Z)
 }
 
 func (v *Vector) Dot(u *Vector) float64 {

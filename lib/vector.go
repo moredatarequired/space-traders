@@ -10,17 +10,17 @@ type Vector struct {
 	X, Y, Z float64
 }
 
-// Assign the values in u to v.
-func (v *Vector) Set(u *Vector) {
-	v.X, v.Y, v.Z = u.X, u.Y, u.Z
-}
-
 func (v *Vector) Dot(u *Vector) float64 {
 	return v.X*u.X + v.Y*u.Y + v.Z*u.Z
 }
 
 func (v *Vector) SquaredLength() float64 {
-	return v.Dot(v)
+	return v.X*v.X + v.Y*v.Y + v.Z*v.Z
+}
+
+// The 2-norm, or Euclidean length.
+func (v *Vector) Length() float64 {
+	return math.Sqrt(v.SquaredLength())
 }
 
 func (v *Vector) SquaredDistance(u *Vector) float64 {
@@ -28,13 +28,8 @@ func (v *Vector) SquaredDistance(u *Vector) float64 {
 	return x*x + y*y + z*z
 }
 
-// The 2-norm, or Euclidean length.
-func (v *Vector) Len() float64 {
-	return math.Pow(v.SquaredLength(), 0.5)
-}
-
 func (v *Vector) Distance(u *Vector) float64 {
-	return math.Pow(v.SquaredDistance(u), 0.5)
+	return math.Sqrt(v.SquaredDistance(u))
 }
 
 // Produce the vector c*v, where c is a scalar.
@@ -42,10 +37,25 @@ func (v *Vector) Times(c float64) *Vector {
 	return &Vector{v.X * c, v.Y * c, v.Z * c}
 }
 
-// Produce a vector parallel to v with length l
+// Multiply this vector by a scalar.
+func (v *Vector) TimesInPlace(c float64) {
+	v.X *= c
+	v.Y *= c
+	v.Z *= c
+}
+
+// Produce a vector parallel to v with length l.
 func (v *Vector) ScaleTo(l float64) *Vector {
-	s := l / v.Len()
+	if *v == (Vector{}) { return &Vector{} }
+	s := l / v.Length()
 	return v.Times(s)
+}
+
+// Resize v to length l.
+func (v *Vector) ScaleToInPlace(l float64) {
+	if *v != (Vector{}) {
+		v.TimesInPlace(l / v.Length())
+	}
 }
 
 // Produce the unit vector along v.
@@ -53,17 +63,41 @@ func (v *Vector) Unit() *Vector {
 	return v.ScaleTo(1)
 }
 
+// Turn v into the parallel unit vector.
+func (v *Vector) UnitInPlace() {
+	v.ScaleTo(1)
+}
+
 // Produce the vector (v + u).
 func (v *Vector) Plus(u *Vector) *Vector {
 	return &Vector{v.X + u.X, v.Y + u.Y, v.Z + u.Z}
 }
 
-// Produce the vector (v - u)
+// Set v to the vector sum v + u.
+func (v *Vector) PlusInPlace(u *Vector) {
+	v.X += u.X
+	v.Y += u.Y
+	v.Z += u.Z
+}
+
+// Produce the vector difference (v - u).
 func (v *Vector) Minus(u *Vector) *Vector {
 	return &Vector{v.X - u.X, v.Y - u.Y, v.Z - u.Z}
 }
 
-// Produce the cross product (v * u)
+// Set v to the vector sum v - u.
+func (v *Vector) MinusInPlace(u *Vector) {
+	v.X -= u.X
+	v.Y -= u.Y
+	v.Z -= u.Z
+}
+
+// Produce the cross product (v x u).
 func (v *Vector) Cross(u *Vector) *Vector {
 	return &Vector{v.Y*u.Z - v.Z*u.Y, v.Z*u.X - v.X*u.Z, v.X*u.Y - v.Y*u.X}
+}
+
+// Set v to the cross product (v x u).
+func (v *Vector) CrossInPlace(u *Vector) {
+	v.X, v.Y, v.Z = v.Y*u.Z - v.Z*u.Y, v.Z*u.X - v.X*u.Z, v.X*u.Y - v.Y*u.X
 }

@@ -1,5 +1,9 @@
 package lib
 
+import (
+	"math/rand"
+)
+
 type Ship struct {
 	Position Vector
 	Velocity Vector
@@ -79,6 +83,13 @@ func (s *Ship) Circle(p *Vector, a float64) {
 	s.Acceleration = *p
 	s.Acceleration.MinusInPlace(&s.Position)
 	s.Acceleration.ScaleToInPlace(a)
+}
+
+// Consistently accelerate perpendicular to the enemy and current velocity.
+func (s *Ship) Corkscrew(t *Ship, a float64) {
+	position := s.Position.Minus(&t.Position)
+	velocity := s.Velocity.Minus(&t.Velocity)
+	s.Acceleration = *position.Cross(velocity).ScaleTo(a)
 }
 
 // Fly as fast as possible maintaining a given distance.

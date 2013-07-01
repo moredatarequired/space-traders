@@ -27,12 +27,12 @@ func main() {
 	gnat.Position.X = 400 //float64(size * scale)
 	gnat.Velocity.Y = 0.1
 	x, y := int(gnat.Position.X), int(gnat.Position.Y)
-	steps := 100000
+	steps := 10000
 	//for abs(x) < size*scale && abs(y) < size*scale {
 	for i := 0; i < steps; i++ {
 		color := color.Gray{uint8(256 * float64(i) / float64(steps))}
 		plot.SetGray(x/scale, y/scale, color)
-		gnat.MaintainDistance(fixed, 40, 1000)
+		gnat.Corkscrew(fixed, 40)
 		if false {
 		p, v, a := gnat.Position, gnat.Velocity, gnat.Acceleration
 		fmt.Printf("At (%.3f, %.3f)->(%.3f, %.3f)=>(%.3f, %.3f)\n",
@@ -42,7 +42,6 @@ func main() {
 			p, v, a := gnat.Position, gnat.Velocity, gnat.Acceleration
 			fmt.Printf("At (%.3f, %.3f)->(%.3f, %.3f)=>(%.3f, %.3f)\n",
 				p.X, p.Y, v.X, v.Y, a.X, a.Y)
-			fmt.Println(gnat.Velocity.Length())
 		}
 		gnat.Move(0.01)
 		x, y = int(gnat.Position.X), int(gnat.Position.Y)

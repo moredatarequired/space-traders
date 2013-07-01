@@ -74,9 +74,23 @@ func (s *Ship) SpiralAway(t *Ship, a float64) {
 	}
 }
 
-// "Orbits" the target. Orbit is circular when a = v^2 / r.
+// Dive toward the target, effectively an orbit. Circular when a = v^2 / r.
 func (s *Ship) Circle(p *Vector, a float64) {
 	s.Acceleration = *p
 	s.Acceleration.MinusInPlace(&s.Position)
+	s.Acceleration.ScaleToInPlace(a)
+}
+
+// Fly as fast as possible maintaining a given distance.
+func (s *Ship) MaintainDistance(t *Ship, a float64, d float64) {
+	position := s.Position.Minus(&t.Position)
+	velocity := s.Velocity.Minus(&t.Velocity)
+	vToward := velocity.Project(position)
+	vTangent := velocity.Minus(vToward)
+	idealVSquared := a*d
+	alpha := idealVSquared / vTangent.SquaredLength() - 1.1
+	beta := (d*d) / position.SquaredLength() - 2
+	s.Acceleration = *vTangent.Unit().Times(alpha).Plus(
+		position.Unit().Times(beta))
 	s.Acceleration.ScaleToInPlace(a)
 }

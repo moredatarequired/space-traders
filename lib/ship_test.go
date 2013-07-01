@@ -104,3 +104,19 @@ func BenchmarkCircle(b *testing.B) {
 		s.Circle(p, 5)
 	}
 }
+
+func TestMaintainDistance(t *testing.T) {
+	f := &Ship{}
+	for _, p := range []float64{1, 10, 100} {
+		for _, d := range []float64{1, 10, 100} {
+			s := &Ship{Position:Vector{X:p}, Velocity:Vector{Y:3}}
+			for i := 0; i < 10000; i++ {
+				s.MaintainDistance(f, 10, d)
+				s.Move(0.1)
+			}
+			if math.Abs(s.Distance(f) / d - 1) > 0.25 {
+				t.Errorf("Ship %v is out of bounds %v", s, d)
+			}
+		}
+	}
+}
